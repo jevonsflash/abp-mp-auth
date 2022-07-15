@@ -1,0 +1,190 @@
+
+
+
+
+<template>
+  <div id="app">
+    <!-- <img alt="Vue logo" src="./assets/logo.png" />
+    <HelloWorld msg="Welcome to Your Vue.js App" /> -->
+    <div style="height: 450px">
+      <div v-if="wechatMiniappLoginStatus == 'ACCESSED'">
+        <el-result
+          icon="success"
+          title="已扫码"
+          subTitle="请在小程序上根据提示进行操作"
+        >
+          <template slot="extra">
+            <el-button type="primary" size="medium">刷新</el-button>
+          </template>
+        </el-result>
+      </div>
+      <div v-else-if="wechatMiniappLoginStatus == 'AUTHORIZED'">
+        <el-result
+          icon="success"
+          title="已授权"
+          :subTitle="loading ? '请稍候..' : '正在使用微信账号登录系统'"
+        >
+        </el-result>
+      </div>
+      <div v-else>
+        <img
+          :src="`${prefix}/MiniProgram/GetACode?scene=${getToken()}&page=${miniappPage}&mode=content`"
+        />
+      </div>
+    </div>
+  </div>
+</template>
+
+<script lang='ts'>
+import Enumerable from "linq";
+import HelloWorld from "./components/HelloWorld.vue";
+import { getCancelToken, request } from "./ajaxRequire";
+import Cookies from "js-cookie";
+
+const tokenKey = "main_token";
+const setToken = (token: string) => Cookies.set(tokenKey, token);
+
+export default {
+  name: "App",
+  // components: {HelloWorld},
+  data: () => {
+    return {
+      showHistory: false,
+      loading: false,
+      timerId: -1,
+      currentWxLogin: null,
+      activeName: "account",
+      wechatMiniappLoginToken: null,
+      wechatMiniappLoginStatus: "WAIT",
+      miniappPage: "",
+      // 小程序未发布时无法跳转至页面，报错41030，https://developers.weixin.qq.com/community/develop/doc/00066c970b4c90f8fd6cbe31e5b400?source=indexmixflow
+      // miniappPage : "pages/login/extend",
+      prefix: "https://localhost:44311/api/services/app",
+    };
+  },
+  created: function () {
+    this.start();
+  },
+  methods: {
+    successMessage(value = "执行成功") {
+      this.$notify({
+        title: "成功",
+        message: value,
+        type: "success",
+      });
+    },
+
+    errorMessage(value = "执行错误") {
+      this.$notify.error({
+        title: "错误",
+        message: value,
+      });
+    },
+
+    getToken() {
+      if (this.wechatMiniappLoginToken == null) {
+        var date = new Date();
+        var token = `${(Math.random() * 100000000)
+          .toFixed(0)
+          .toString()
+          .padEnd(8, "0")}`;
+        this.wechatMiniappLoginToken = token;
+      }
+      return this.wechatMiniappLoginToken;
+    },
+
+    start() {
+      clearInterval(this.timerId);
+      this.timerId = setInterval(async () => {
+        if (!this.loading) {
+          this.loading = true;
+
+          await request(
+            `${this.prefix}/MiniProgram/GetToken?token=${this.wechatMiniappLoginToken}`,
+            "get",
+            null
+          )
+            .then(async (re) => {
+              if (re.data.result == null) {
+                this.wechatMiniappLoginStatus = "EXPIRED";
+                this.getToken();
+              } else {
+                var result = re.data.result;
+                this.wechatMiniappLoginStatus = result.status;
+                if (
+                  this.wechatMiniappLoginStatus == "AUTHORIZED" &&
+                  result.providerAccessCode != null
+                ) {
+                  await this.handleWxLogin(result.providerAccessCode).then(
+                    () => {
+                      this.wechatMiniappLoginStatus = null;
+                    }
+                  );
+                }
+              }
+            })
+            .finally(() => {
+              this.loading = false;
+            });
+        }
+      }, 3000);
+    },
+
+    async afterLoginSuccess(userinfo) {
+      clearInterval(this.timerId);
+      this.successMessage("登录成功");
+    },
+
+    async ExternalLogin(userInfo: {
+      authProvider: string;
+      providerKey: string;
+      providerAccessCode: string;
+    }) {
+      let authProvider = userInfo.authProvider;
+      let providerKey = userInfo.providerKey;
+      let providerAccessCode = userInfo.providerAccessCode;
+
+      await request(
+        `https://localhost:44311/api/TokenAuth/ExternalAuthenticate`,
+        "post",
+        {
+          authProvider,
+          providerKey,
+          providerAccessCode,
+        }
+      ).then(async (res) => {
+        var data = res.result;
+        setToken(data.accessToken);
+        this.SET_TOKEN(data.accessToken);
+      });
+    },
+
+    async handleExternalLogin(authProvider) {
+      // (this.$refs.baseForm as any).validate(async (valid) => {
+      //   if (valid == null) {
+      var currentForms = this.loginExternalForms[authProvider];
+
+      this.loading = true;
+      await this.ExternalLogin(currentForms)
+        .then(async (re) => {
+          await request(`${this.prefix}/User/GetCurrentUser`, "get", null).then(
+            (re) => {
+              var result = re.data.result as any;
+              this.afterLoginSuccess(result);
+            }
+          );
+        })
+        .catch((err) => {
+          setTimeout(() => {
+            this.loading = false;
+          }, 1.5 * 1000);
+        });
+    },
+
+    async handleWxLogin(providerAccessCode) {
+      this.loginExternalForms.WeChat.providerAccessCode = providerAccessCode;
+      this.handleExternalLogin("WeChat");
+    },
+  },
+};
+</script>
