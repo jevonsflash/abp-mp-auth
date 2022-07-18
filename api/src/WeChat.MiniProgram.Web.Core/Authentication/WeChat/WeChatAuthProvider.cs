@@ -28,7 +28,7 @@ namespace GDMK.CAH.Authentication.WeChat
             //var userInfo = await loginService.GetUserInfoAsync(weChatLoginResult.OpenId);
 
             var seed = Guid.NewGuid().ToString("N").Substring(0, 7);
-
+            result.EmailAddress=$"{seed}@qq.com";
             result.Name = seed;
             result.Surname = "微信用户";
             result.ProviderKey = weChatLoginResult.OpenId;

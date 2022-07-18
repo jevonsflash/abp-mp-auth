@@ -9,15 +9,13 @@
     <div style="height: 450px">
       <div v-if="wechatMiniappLoginStatus == 'ACCESSED'">
         <el-result
-          icon="success"
+          icon="info"
           title="已扫码"
           subTitle="请在小程序上根据提示进行操作"
         >
-          <template slot="extra">
-            <el-button type="primary" size="medium">刷新</el-button>
-          </template>
         </el-result>
       </div>
+
       <div v-else-if="wechatMiniappLoginStatus == 'AUTHORIZED'">
         <el-result
           icon="success"
@@ -26,11 +24,23 @@
         >
         </el-result>
       </div>
-      <div v-else>
+      <div v-else class="center">
         <img
           :src="`${prefix}/MiniProgram/GetACode?scene=${getToken()}&page=${miniappPage}&mode=content`"
         />
       </div>
+    </div>
+    <div class="center">
+      <el-button
+        v-if="wechatMiniappLoginToken != null"
+        type="primary"
+        size="medium"
+        @click="wechatMiniappLoginToken = null"
+        >刷新</el-button
+      >
+    </div>
+    <div class="center">
+      <span>{{ userInfo }}</span>
     </div>
   </div>
 </template>
@@ -56,10 +66,18 @@ export default {
       activeName: "account",
       wechatMiniappLoginToken: null,
       wechatMiniappLoginStatus: "WAIT",
-      miniappPage: "",
+      // miniappPage: "",
       // 小程序未发布时无法跳转至页面，报错41030，https://developers.weixin.qq.com/community/develop/doc/00066c970b4c90f8fd6cbe31e5b400?source=indexmixflow
-      // miniappPage : "pages/login/extend",
+      miniappPage: "pages/login/index",
       prefix: "https://localhost:44311/api/services/app",
+      userInfo: "",
+      loginExternalForms: {
+        WeChat: {
+          authProvider: "WeChatAuthProvider",
+          providerKey: "default",
+          providerAccessCode: "",
+        },
+      },
     };
   },
   created: function () {
@@ -108,6 +126,7 @@ export default {
               if (re.data.result == null) {
                 this.wechatMiniappLoginStatus = "EXPIRED";
                 this.getToken();
+                this.loading = false;
               } else {
                 var result = re.data.result;
                 this.wechatMiniappLoginStatus = result.status;
@@ -115,24 +134,31 @@ export default {
                   this.wechatMiniappLoginStatus == "AUTHORIZED" &&
                   result.providerAccessCode != null
                 ) {
-                  await this.handleWxLogin(result.providerAccessCode).then(
-                    () => {
+                  await this.handleWxLogin(result.providerAccessCode)
+                    .then(() => {
                       this.wechatMiniappLoginStatus = null;
-                    }
-                  );
+                      this.loading = false;
+                    })
+                    .catch((e) => {
+                      this.wechatMiniappLoginStatus = null;
+                      this.loading = false;
+                    });
+                } else {
+                  this.loading = false;
                 }
               }
             })
-            .finally(() => {
+            .catch((e) => {
               this.loading = false;
             });
         }
-      }, 3000);
+      }, 1000);
     },
 
     async afterLoginSuccess(userinfo) {
       clearInterval(this.timerId);
       this.successMessage("登录成功");
+      this.userInfo = userinfo;
     },
 
     async ExternalLogin(userInfo: {
@@ -153,9 +179,8 @@ export default {
           providerAccessCode,
         }
       ).then(async (res) => {
-        var data = res.result;
+        var data = res.data.result;
         setToken(data.accessToken);
-        this.SET_TOKEN(data.accessToken);
       });
     },
 
@@ -165,26 +190,30 @@ export default {
       var currentForms = this.loginExternalForms[authProvider];
 
       this.loading = true;
-      await this.ExternalLogin(currentForms)
-        .then(async (re) => {
-          await request(`${this.prefix}/User/GetCurrentUser`, "get", null).then(
-            (re) => {
-              var result = re.data.result as any;
-              this.afterLoginSuccess(result);
-            }
-          );
-        })
-        .catch((err) => {
-          setTimeout(() => {
-            this.loading = false;
-          }, 1.5 * 1000);
+      return await this.ExternalLogin(currentForms).then(async (re) => {
+        return await request(
+          `${this.prefix}/User/GetCurrentUser`,
+          "get",
+          null
+        ).then(async (re) => {
+          var result = re.data.result as any;
+          return await this.afterLoginSuccess(result);
         });
+      });
     },
 
     async handleWxLogin(providerAccessCode) {
       this.loginExternalForms.WeChat.providerAccessCode = providerAccessCode;
-      this.handleExternalLogin("WeChat");
+      return await this.handleExternalLogin("WeChat");
     },
   },
 };
 </script>
+<style scoped>
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+</style>

@@ -50,6 +50,9 @@ namespace WeChat.MiniProgram
                  );
 
             ConfigureTokenAuth();
+
+            ConfigureExternalAuth();
+
         }
 
         private void ConfigureTokenAuth()
