@@ -46,9 +46,7 @@
 </template>
 
 <script lang='ts'>
-import Enumerable from "linq";
-import HelloWorld from "./components/HelloWorld.vue";
-import { getCancelToken, request } from "./ajaxRequire";
+import { request } from "./ajaxRequire";
 import Cookies from "js-cookie";
 
 const tokenKey = "main_token";
@@ -142,6 +140,7 @@ export default {
                     .catch((e) => {
                       this.wechatMiniappLoginStatus = null;
                       this.loading = false;
+                      clearInterval(this.timerId);
                     });
                 } else {
                   this.loading = false;
