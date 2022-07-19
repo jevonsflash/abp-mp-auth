@@ -1,7 +1,3 @@
-
-
-
-
 <template>
   <div id="app">
     <!-- <img alt="Vue logo" src="./assets/logo.png" />
@@ -57,11 +53,8 @@ export default {
   // components: {HelloWorld},
   data: () => {
     return {
-      showHistory: false,
       loading: false,
       timerId: -1,
-      currentWxLogin: null,
-      activeName: "account",
       wechatMiniappLoginToken: null,
       wechatMiniappLoginStatus: "WAIT",
       // miniappPage: "",
@@ -123,7 +116,7 @@ export default {
             .then(async (re) => {
               if (re.data.result == null) {
                 this.wechatMiniappLoginStatus = "EXPIRED";
-                this.getToken();
+                this.wechatMiniappLoginToken = null;
                 this.loading = false;
               } else {
                 var result = re.data.result;
@@ -134,11 +127,11 @@ export default {
                 ) {
                   await this.handleWxLogin(result.providerAccessCode)
                     .then(() => {
-                      this.wechatMiniappLoginStatus = null;
+                      this.wechatMiniappLoginToken = null;
                       this.loading = false;
                     })
                     .catch((e) => {
-                      this.wechatMiniappLoginStatus = null;
+                      this.wechatMiniappLoginToken = null;
                       this.loading = false;
                       clearInterval(this.timerId);
                     });
@@ -160,7 +153,7 @@ export default {
       this.userInfo = userinfo;
     },
 
-    async ExternalLogin(userInfo: {
+    async externalLogin(userInfo: {
       authProvider: string;
       providerKey: string;
       providerAccessCode: string;
@@ -189,7 +182,7 @@ export default {
       var currentForms = this.loginExternalForms[authProvider];
 
       this.loading = true;
-      return await this.ExternalLogin(currentForms).then(async (re) => {
+      return await this.externalLogin(currentForms).then(async (re) => {
         return await request(
           `${this.prefix}/User/GetCurrentUser`,
           "get",
