@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "WeChat.MiniProgram.Migrator": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
