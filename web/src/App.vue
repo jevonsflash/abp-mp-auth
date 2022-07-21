@@ -60,7 +60,7 @@ export default {
       // miniappPage: "",
       // 小程序未发布时无法跳转至页面，报错41030，https://developers.weixin.qq.com/community/develop/doc/00066c970b4c90f8fd6cbe31e5b400?source=indexmixflow
       miniappPage: "pages/login/index",
-      prefix: "https://localhost:44311/api/services/app",
+      prefix: "https://api.matoapp.net:3002/api/services/app",
       userInfo: "",
       loginExternalForms: {
         WeChat: {
@@ -163,7 +163,7 @@ export default {
       let providerAccessCode = userInfo.providerAccessCode;
 
       await request(
-        `https://localhost:44311/api/TokenAuth/ExternalAuthenticate`,
+        `https://api.matoapp.net:3002/api/TokenAuth/ExternalAuthenticate`,
         "post",
         {
           authProvider,

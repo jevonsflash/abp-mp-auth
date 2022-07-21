@@ -40,7 +40,7 @@ export default {
           providerAccessCode: "",
         },
       },
-      prefix: "https://localhost:44311/api/services/app",
+      prefix: "https://api.matoapp.net:3002/api/services/app",
     };
   },
   onLoad(option) {

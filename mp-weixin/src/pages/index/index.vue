@@ -10,7 +10,10 @@
       </div>
       <div class="main-area">
         <ul>
-          <li>请使用微信扫描Web端的小程序码</li>
+          <li>
+            请在电脑浏览器打开:<br/>https://www.matoapp.net:3003/
+          </li>
+          <li>使用微信扫描Web端的小程序码</li>
           <li>等待微信小程序跳转至授权页面</li>
           <li>点击授权登录按钮，完成登录</li>
         </ul>
@@ -19,9 +22,7 @@
         <text>详情请查看系列博客⌈使用 Abp.Zero 搭建第三方登录模块⌋</text>
       </div>
       <div class="main-area">
-        <a href="https://blog.csdn.net/jevonsflash/article/details/125432269"
-          >点击前往</a
-        >
+        <text>https://blog.csdn.net/jevonsflash/</text>
       </div>
     </div>
   </div>
@@ -33,7 +34,7 @@ export default {
     return {
       title: "abp mp auth sample",
     };
-  },
+  }
 };
 </script>
 
