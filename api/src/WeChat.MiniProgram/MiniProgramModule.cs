@@ -15,10 +15,10 @@ namespace WeChat.MiniProgram
 
 
         private readonly IConfigurationRoot _appConfiguration;
-        public MiniProgramModule(IHostEnvironment env)
+        public MiniProgramModule()
         {
             _appConfiguration = AppConfigurations.Get(
-    typeof(MiniProgramModule).GetAssembly().GetDirectoryPathOrNull(), env.EnvironmentName, env.IsDevelopment()
+    typeof(MiniProgramModule).GetAssembly().GetDirectoryPathOrNull()
 );
         }
         public override void PreInitialize()

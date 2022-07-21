@@ -13,10 +13,10 @@ namespace WeChat.Common
 
 
         private readonly IConfigurationRoot _appConfiguration;
-        public WeChatCommonModule(IHostEnvironment env)
+        public WeChatCommonModule()
         {
             _appConfiguration = AppConfigurations.Get(
-    typeof(WeChatCommonModule).GetAssembly().GetDirectoryPathOrNull(), env.EnvironmentName, env.IsDevelopment()
+    typeof(WeChatCommonModule).GetAssembly().GetDirectoryPathOrNull()
 );
         }
         public override void PreInitialize()
